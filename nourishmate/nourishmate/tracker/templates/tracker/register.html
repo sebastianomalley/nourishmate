@@ -1,0 +1,69 @@
+{% extends "tracker/base.html" %}
+{% load static %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'tracker/css/auth.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'tracker/js/auth.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5" style="max-width: 500px;">
+    
+    <!-- Branding Section -->
+    <div class="text-center mb-4">
+        <h1 class="display-6 fw-bold text-success">🌱 NourishMate</h1>
+        <p class="text-muted small">Your plant-powered nutrition companion</p>
+    </div>
+
+    <!-- Registration Form -->
+    <h2 class="mb-4 text-center">Create an Account</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <!-- Username Field -->
+        <div class="mb-3">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {{ form.username.errors }}
+        </div>
+        
+        <!-- Username Rules -->
+        <ul class="text-muted small d-none" id="username-rules">
+            <li id="user-len" class="text-danger">At least 4 characters</li>
+        </ul>
+        
+        <!-- Password Field -->
+        <div class="mb-3">
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+            {{ form.password1.errors }}
+        </div>
+
+        <!-- Password Rules -->
+        <ul class="text-muted small d-none" id="password-rules">
+            <li id="len" class="text-danger">At least 8 characters</li>
+            <li id="upper" class="text-danger">Contains uppercase letter</li>
+            <li id="num" class="text-danger">Contains a number</li>
+        </ul>
+
+        <!-- Confirm Password Field -->
+        <div class="mb-3">
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+            {{ form.password2.errors }}
+        </div>
+        <!-- Match Warning -->
+        <div id="match" class="text-danger small d-none">
+            Passwords do not match.
+        </div>      
+
+        <!-- Button -->
+        <button type="submit" class="btn btn-success w-100">Register</button>
+    </form>
+    </div>
+{% endblock %}

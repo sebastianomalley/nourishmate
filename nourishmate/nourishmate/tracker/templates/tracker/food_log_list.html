@@ -1,0 +1,387 @@
+{% extends "tracker/base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}
+    Food Log
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+
+        <!-- Page Header -->
+        <h1 class="mb-4">NourishMate — Food Log</h1>
+
+        <!-- Add Food Card -->
+        <div class="card p-4 mb-4 shadow-sm nourish-card">
+            <h4 class="mb-3">Add Food</h4>
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- Basic Info Row -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        {{ form.food_name.label_tag }}
+                        {{ form.food_name }}
+                        {% for err in form.food_name.errors %}
+                            <div class="invalid-feedback d-block text-danger">
+                                {{ err }}
+                            </div>
+                        {% endfor %}
+                        <datalist id="food-suggestions"></datalist>
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.quantity_amount.label_tag }}
+                        {{ form.quantity_amount }}
+                        {% for err in form.quantity_amount.errors %}
+                            <div class="invalid-feedback d-block text-danger">
+                                {{ err }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.quantity_unit.label_tag }}
+                        <div class="input-group">
+                            {{ form.quantity_unit }}
+                        </div>
+                        {% for err in form.quantity_unit.errors %}
+                            <div class="invalid-feedback d-block text-danger">
+                                {{ err }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.category.label_tag }}
+                        {{ form.category }}
+                        {% for err in form.category.errors %}
+                            <div class="invalid-feedback d-block text-danger">
+                                {{ err }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Nutrition Info (Collapsible). -->
+                <div class="accordion mb-3" id="nutritionAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="nutritionHeading">
+                            <button
+                                class="accordion-toggle-clean form-select d-flex justify-content-between align-items-center"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#nutritionCollapse"
+                                aria-expanded="false"
+                                aria-controls="nutritionCollapse"
+                            >
+                                Add Nutrition Info (optional)
+                            </button>
+                        </h2>
+                        <div
+                            id="nutritionCollapse"
+                            class="accordion-collapse collapse {% if form.calories.errors or form.protein.errors or form.carbs.errors or form.sugars.errors or form.fiber.errors or form.fat.errors or form.saturated_fat.errors or form.cholesterol.errors or form.sodium.errors or form.potassium.errors or form.calcium.errors or form.iron.errors or form.vitamin_a.errors or form.vitamin_c.errors or form.vitamin_d.errors or form.vitamin_b12.errors or form.magnesium.errors or form.zinc.errors %}show{% endif %}"
+                            aria-labelledby="nutritionHeading"
+                            data-bs-parent="#nutritionAccordion"
+                        >
+                            <div class="accordion-body">
+                                <div class="row">
+                                    {% for field in form.visible_fields %}
+                                        {% if field.name not in 'food_name quantity_amount quantity_unit category date_logged' %}
+                                            <div class="col-md-3 mb-3">
+                                                {{ field.label_tag }}
+                                                <div class="input-group">
+                                                    {{ field }}
+                                                    {% if field.name == 'calories' %}
+                                                        <span class="input-group-text">kcal</span>
+                                                    {% elif field.name in 'sodium potassium calcium iron magnesium zinc vitamin_c cholesterol' %}
+                                                        <span class="input-group-text">mg</span>
+                                                    {% elif field.name in 'protein carbs sugars fiber fat saturated_fat' %}
+                                                        <span class="input-group-text">g</span>
+                                                    {% elif field.name in 'vitamin_a vitamin_d vitamin_b12' %}
+                                                        <span class="input-group-text">mcg</span>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <!-- Display errors for each field. -->
+                                                {% for err in field.errors %}
+                                                    <div class="invalid-feedback d-block text-danger">
+                                                        {{ err }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Field -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        {{ form.date_logged.label_tag }}
+                        {{ form.date_logged }}
+                        {% for err in form.date_logged.errors %}
+                            <div class="invalid-feedback d-block text-danger">
+                                {{ err }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-success mt-2">Add</button>
+            </form>
+        </div>
+
+        <!-- Past Logs Card -->
+        <div class="card p-4 shadow-sm nourish-card">
+            <h4 class="mb-3">Past Logs</h4>
+
+            <!-- Filters and Sorting -->
+            <form method="get" class="mb-3 d-flex align-items-center gap-2">
+                <label for="category" class="mb-0">Filter by Category:</label>
+                <select
+                    name="category"
+                    id="category"
+                    class="form-select form-select-sm w-auto"
+                    onchange="this.form.submit()"
+                >
+                    <option value="">All Categories</option>
+                    {% for val, label in CATEGORY_CHOICES %}
+                        <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="sort-select" class="mb-0 ms-3">Sort by:</label>
+                <select
+                    name="sort"
+                    id="sort-select"
+                    class="form-select form-select-sm w-auto"
+                    onchange="this.form.submit()"
+                >
+                    <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>Newest First</option>
+                    <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>Oldest First</option>
+                    <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>A–Z</option>
+                    <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Z–A</option>
+                    <option value="calories_desc" {% if sort == 'calories_desc' %}selected{% endif %}>High Calories</option>
+                    <option value="calories_asc" {% if sort == 'calories_asc' %}selected{% endif %}>Low Calories</option>
+                </select>
+            </form>
+
+            <!-- Log List -->
+            <ul class="list-group">
+                {% for log in page_obj %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ log.date_logged }}</strong> — {{ log.food_name }} ({{ log.quantity }})
+                            <span class="badge
+                                {% if log.category == 'fruit' %}bg-warning
+                                {% elif log.category|lower == 'vegetable' %}bg-success
+                                {% elif log.category == 'protein' %}bg-danger
+                                {% elif log.category == 'grain' %}bg-warning text-dark
+                                {% elif log.category == 'dairy' %}bg-info text-dark
+                                {% elif log.category == 'fish' %}bg-primary
+                                {% elif log.category == 'frozen' %}bg-dark
+                                {% elif log.category == 'dessert' %}bg-pink text-dark
+                                {% elif log.category == 'wine' %}bg-danger text-white
+                                {% else %}bg-secondary
+                                {% endif %}
+                            ">
+                                {{ log.category|capfirst }}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+
+                            <!-- Edit Button -->
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal-{{ log.pk }}"
+                            >
+                                Edit
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal-{{ log.pk }}"
+                            >
+                                Delete
+                            </button>
+
+                            <!-- Delete Modal -->
+                            <div
+                                class="modal fade"
+                                id="deleteModal-{{ log.pk }}"
+                                tabindex="-1"
+                                aria-labelledby="deleteModalLabel-{{ log.pk }}"
+                                aria-hidden="true"
+                                data-bs-backdrop="static"
+                                data-bs-keyboard="true"
+                            >
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        {% with request.GET.urlencode as qs %}
+                                            <form
+                                                method="post"
+                                                action="{% url 'food_log_delete' log.pk %}{% if qs %}?{{ qs }}{% endif %}"
+                                            >
+                                                {% csrf_token %}
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteModalLabel-{{ log.pk }}">
+                                                        Confirm Deletion
+                                                    </h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"
+                                                            aria-label="Close">
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Are you sure you want to delete
+                                                    <strong>{{ log.food_name }}</strong>
+                                                    logged on {{ log.date_logged }}?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                            data-bs-dismiss="modal">
+                                                        Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        Yes, delete
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Edit Modal -->
+                            <div
+                                class="modal fade"
+                                id="editModal-{{ log.pk }}"
+                                tabindex="-1"
+                                aria-labelledby="editModalLabel-{{ log.pk }}"
+                                aria-hidden="true"
+                                data-bs-backdrop="static"
+                                data-bs-keyboard="true"
+                            >
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        {% with request.GET.urlencode as qs %}
+                                            <form
+                                                method="post"
+                                                action="{% url 'food_log_edit' log.pk %}{% if qs %}?{{ qs }}{% endif %}"
+                                                autocomplete="off"
+                                            >
+                                                {% csrf_token %}
+                                                <div class="modal-header">
+                                                    <h5
+                                                        class="modal-title"
+                                                        id="editModalLabel-{{ log.pk }}"
+                                                    >
+                                                        Edit Log Entry
+                                                    </h5>
+                                                    <button
+                                                        type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Close"
+                                                    ></button>
+                                                </div>
+                                                {% with bound_forms|get_item:log.pk as edit_form %}
+                                                    <div class="modal-body">
+                                                        {{ edit_form.as_p }}
+                                                    </div>
+                                                {% endwith %}
+                                                <div class="modal-footer">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        Save Changes
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add to Grocery -->
+                            <form method="POST" action="{% url 'add_to_grocery_list' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="food_name" value="{{ log.food_name }}">
+                                <input type="hidden" name="quantity" value="{{ log.quantity }}">
+                                <input type="hidden" name="category" value="{{ log.category }}">
+                                <input
+                                    type="hidden"
+                                    name="next"
+                                    value="{{ request.get_full_path }}"
+                                >
+                                <button
+                                    type="submit"
+                                    class="btn btn-outline-primary btn-sm"
+                                >
+                                    Add to Grocery
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">No food logged yet.</li>
+                {% endfor %}
+            </ul>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        {% if page_obj.has_previous %}
+                            <a class="page-link"
+                                href="?page={{ page_obj.previous_page_number }}{% if sort %}&amp;sort={{ sort }}{% endif %}{% if category_filter %}&amp;category={{ category_filter }}{% endif %}"
+                                aria-label="Previous">←</a>
+                        {% else %}
+                            <span class="page-link">←</span>
+                        {% endif %}
+                    </li>
+
+                {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                    {% if num == page_obj.number %}
+                        <span class="page-link">{{ num }}</span>
+                    {% else %}
+                        <a class="page-link"
+                        href="?page={{ num }}{% if sort %}&amp;sort={{ sort }}{% endif %}{% if category_filter %}&amp;category={{ category_filter }}{% endif %}"
+                        >{{ num }}</a>
+                    {% endif %}
+                    </li>
+                {% endfor %}
+
+                <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                    {% if page_obj.has_next %}
+                        <a class="page-link"
+                        href="?page={{ page_obj.next_page_number }}{% if sort %}&amp;sort={{ sort }}{% endif %}{% if category_filter %}&amp;category={{ category_filter }}{% endif %}"
+                            aria-label="Next">→</a>
+                    {% else %}
+                        <span class="page-link">→</span>
+                    {% endif %}
+                </li>
+                </ul>
+            </nav>
+            
+        </div>
+    </div>
+
+    <script src="{% static 'tracker/js/food-autocomplete.js' %}"></script>
+{% endblock %}

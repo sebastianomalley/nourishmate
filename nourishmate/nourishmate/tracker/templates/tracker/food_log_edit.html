@@ -1,0 +1,39 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+
+        <!-- Page Header -->
+        <h2>Edit Food Log Entry</h2>
+
+        <!-- Edit Form -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Loop through each visible field. -->
+            {% for field in form.visible_fields %}
+                <div class="row mb-3">
+                    <div class="col-md-3">
+
+                    <!-- Field Label & Input. -->
+                    {{ field.label_tag }}
+                    {{ field }}
+            
+                    <!-- Field errors. -->
+                    {% for err in field.errors %}
+                        <div class="invalid-feedback d-block text-danger">
+                        {{ err }}
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+            <!-- Button -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">Save</button>
+                <a href="{% url 'food_log_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "tracker/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="mb-4">Nutrition Summary</h1>
+
+        <!-- Today’s Low-Nutrient Alerts. -->
+        {% if today_lows %}
+            <div class="alert alert-warning mt-4">
+                <h5 class="mb-1">⚠️ Nutrients low today</h5>
+                <p class="text-muted small mb-3">These reflect only <strong>today's</strong> intake and supplements.</p>
+
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+                    {% for nutrient in today_lows %}
+                        <div class="col">
+                            <div class="card border-warning h-100">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="card-title mb-1">{{ nutrients|get_item:nutrient }}</h6>
+                                    <p class="card-text small mb-0 text-danger">
+                                        {{ today_totals|get_item:nutrient|floatformat:1 }} /
+                                        {% with goal=DAILY_TARGETS|get_item:nutrient %}
+                                            {{ goal }}
+                                            (<span class="text-danger">
+                                                {{ today_totals|get_item:nutrient|percent:goal }}%
+                                            </span> of goal)
+                                        {% endwith %}
+                                    </p>              
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Totals Table/Date-Range Filter. --> 
+        <div class="accordion mb-4" id="totalsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#nutrientTotals" aria-expanded="false" aria-controls="nutrientTotals">
+                        📊 View Nutrient Totals Table & Date Range Filter
+                    </button>
+                </h2>
+                
+                <div id="nutrientTotals" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                    data-bs-parent="#totalsAccordion">
+                        <div class="accordion-body">
+
+                            <!-- Date Range Filter Form. -->
+                            <form method="get" action="{% url 'nutrition_summary' %}" class="mb-4 d-flex gap-2 align-items-center flex-wrap">
+                                <label for="range-select" class="mb-0">Show:</label>
+                                <select id="range-select" name="range"
+                                        class="form-select w-auto"
+                                        onchange="this.form.submit()">
+                                <option value="today" {% if selected_range == "today" %}selected{% endif %}>Today</option>
+                                <option value="7"     {% if selected_range == "7"     %}selected{% endif %}>Last 7 Days</option>
+                                <option value="30"    {% if selected_range == "30"    %}selected{% endif %}>Last 30 Days</option>
+                                <option value="month" {% if selected_range == "month" %}selected{% endif %}>This Month</option>
+                                <option value="custom" {% if selected_range == "custom" %}selected{% endif %}>Custom Range</option>
+                                </select>
+
+                                {% if selected_range == "custom" %}
+                                <input
+                                    type="date"
+                                    name="start_date"
+                                    class="form-control form-control-sm"
+                                    value="{{ start_date|date:'Y-m-d' }}"
+                                >
+                                <span class="mx-1 mb-0">to</span>
+                                <input
+                                    type="date"
+                                    name="end_date"
+                                    class="form-control form-control-sm"
+                                    value="{{ end_date|date:'Y-m-d' }}"
+                                >
+                                <button type="submit" class="btn btn-primary btn-sm ms-2">Go</button>
+                                {% endif %}
+
+                                <noscript>
+                                <button type="submit" class="btn btn-primary btn-sm">Go</button>
+                                </noscript>
+                            </form>
+
+                            <!-- Totals Table -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-success text-white">
+                                    <h4 class="mb-0">
+                                        {% if selected_range == "today" %}
+                                            Today
+                                        {% elif selected_range == "7" %}
+                                            Last 7 Days
+                                        {% elif selected_range == "30" %}
+                                            Last 30 Days
+                                        {% elif selected_range == "month" %}
+                                            This Month
+                                        {% elif selected_range == "custom" %}
+                                            {{ start_date|date:"M j, Y" }} – {{ end_date|date:"M j, Y" }}
+                                        {% else %}
+                                            Custom Range
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                                <div class="card-body table-responsive">
+                                    <table class="table table-bordered text-center align-middle">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>Nutrient</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for key, label in nutrients.items %}
+                                                {% with total=totals|get_item:key %}
+                                                {% with status=badges|get_item:key %}
+                                                    <tr>
+                                                    <td>{{ label }}</td>
+                                                    <td>{{ total|floatformat:1 }}</td>
+                                                    <td>
+                                                        {% if status == "Low" %}
+                                                        <span class="badge bg-danger d-inline-block text-center" style="min-width: 60px;">Low</span>
+                                                        {% elif status == "High" %}
+                                                        <span class="badge bg-warning text-dark d-inline-block text-center" style="min-width: 60px;">High</span>
+                                                        {% else %}
+                                                        <span class="badge bg-success d-inline-block text-center" style="min-width: 60px;">Good</span>
+                                                        {% endif %}
+                                                    </td>                                                          
+                                                    </tr>
+                                                {% endwith %}
+                                                {% endwith %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

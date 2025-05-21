@@ -1,0 +1,68 @@
+{% extends "tracker/base.html" %}
+{% load custom_filters %}
+
+
+{% block title %}Welcome to NourishMate{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+
+        <!-- Welcome Banner -->
+        <div class="text-center">
+            <h1 class="display-4">Welcome to NourishMate</h1>
+            <p class="lead">Track your plant-based meals and build better grocery lists — all in one place.</p>
+
+            <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+                <a href="{% url 'food_log_list' %}" class="btn btn-success btn-lg">Log a Food Item</a>
+                <a href="{% url 'grocery_list' %}" class="btn btn-primary btn-lg">View Grocery List</a>
+            </div>
+        </div>
+    
+        <!-- Supplement Tracker Card -->
+        <div class="card mt-5 shadow-sm">
+            <div class="card-body">
+            <h5 class="card-title">💊 Supplement Tracker</h5>
+            <p class="card-text">Have you taken your vitamins today?</p>
+        
+            <div class="row row-cols-1 row-cols-sm-3 g-3">
+                {% for slot in slots %}
+                <div class="col">
+                    {% if taken_supplements|get_item:slot %}
+                    <form method="post" action="{% url 'toggle_supplement' slot %}">
+                        {% csrf_token %}
+                        <button class="btn btn-success w-100">
+                        ✅ {{ slot|capfirst }} Taken — Undo?
+                        </button>
+                    </form>              
+                    {% else %}
+                    <form method="post" action="{% url 'toggle_supplement' slot %}">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-primary w-100">
+                        Mark {{ slot|capfirst }} Taken
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            </div>
+        </div>
+
+        <!-- Nutrient Alerts -->
+        {% if low_nutrients %}
+            <div class="alert alert-warning text-start mt-5">
+            <h5>⚠️ Nutrients you’re low on today:</h5>
+            <ul class="mb-0">
+                {% for nutrient in low_nutrients %}
+                <li>{{ nutrient|title }}</li>
+                {% endfor %}
+            </ul>
+            </div>
+        {% else %}
+            <div class="alert alert-success text-start mt-5">
+            ✅ You’re meeting your key nutrient goals so far today!
+            </div>
+        {% endif %}
+
+    </div>
+{% endblock %}

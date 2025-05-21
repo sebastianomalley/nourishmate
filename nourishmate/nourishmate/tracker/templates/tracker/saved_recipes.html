@@ -1,0 +1,111 @@
+{% extends "tracker/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+
+        <!-- Page Header -->
+        <h1 class="mb-4">Your Saved Recipes</h1>
+
+        <!-- Back to Search -->
+        <div class="mb-3">
+            <a href="{% url 'recipe_search' %}" class="btn btn-outline-primary btn-sm">
+                Back to Recipe Search
+            </a>
+        </div>
+
+        {% if recipes %}
+            <!-- Saved Recipes Grid -->
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                {% for r in recipes %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+
+                            <!-- Recipe Image -->
+                            {% if r.image_url %}
+                                <img src="{{ r.image_url }}" class="card-img-top" alt="{{ r.title }}">
+                            {% endif %}
+
+                            <div class="card-body">
+
+                                <!-- Recipe Title -->
+                                <h5 class="card-title">{{ r.title }}</h5>
+
+                                <!-- Buttons -->
+                                <div class="d-flex gap-2">
+                                    
+                                    <!-- View Recipe -->
+                                    <a href="{{ r.source_url }}"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        View Recipe
+                                    </a>
+
+                                    <!-- Delete Trigger Button -->
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteSavedModal-{{ r.id }}"
+                                    >
+                                        Delete
+                                    </button>
+
+                                    <!-- Delete Confirmation Modal -->
+                                    <div
+                                        class="modal fade"
+                                        id="deleteSavedModal-{{ r.id }}"
+                                        tabindex="-1"
+                                        aria-labelledby="deleteSavedLabel-{{ r.id }}"
+                                        aria-hidden="true"
+                                        data-bs-backdrop="static"
+                                        data-bs-keyboard="true"
+                                    >
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form method="post"
+                                                      action="{% url 'delete_saved_recipe' r.id %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deleteSavedLabel-{{ r.id }}">
+                                                            Confirm Deletion
+                                                        </h5>
+                                                        <button type="button"
+                                                                class="btn-close"
+                                                                data-bs-dismiss="modal"
+                                                                aria-label="Close">
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to remove
+                                                        <strong>{{ r.title }}</strong>
+                                                        from your saved recipes?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button"
+                                                                class="btn btn-secondary"
+                                                                data-bs-dismiss="modal">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="submit"
+                                                                class="btn btn-danger">
+                                                            Yes, delete
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <p>You haven’t saved any recipes yet.</p>
+        {% endif %}
+
+    </div>
+{% endblock %}
