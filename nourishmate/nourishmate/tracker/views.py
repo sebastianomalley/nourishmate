@@ -840,7 +840,17 @@ def ingredient_autocomplete(request):
     }
 
     response = requests.get(url, params=params)
-    results = response.json() if response.status_code == 200 else []
+
+    # TEMP DEBUG
+    if response.status_code != 200:
+        return JsonResponse({
+            "debug_status": response.status_code,
+            "debug_body": response.text,
+            "debug_key_present": bool(api_key),
+            "debug_key_length": len(api_key) if api_key else 0,
+        }, status=200)
+
+    results = response.json()
 
     suggestions = [
         {"name": item["name"], "id": item["id"]}
