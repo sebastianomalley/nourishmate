@@ -31,6 +31,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['nourishmate-2iim.onrender.com']
 
+CSRF_TRUSTED_ORIGINS = ['https://nourishmate-2iim.onrender.com']
+
 # Spoonacular key.
 SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 
