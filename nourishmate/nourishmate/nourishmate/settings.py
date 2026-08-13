@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-_d9zkmo#8=wqnr(3j8i&*7cqu6)rw$*-5l!-6@p5y$zq+he79d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['nourishmate-2iim.onrender.com']
 
 # Spoonacular key.
 SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
